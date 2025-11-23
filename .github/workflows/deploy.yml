@@ -19,17 +19,19 @@ jobs:
           - branch: master
             env_name: production
             config: ./fly.production.toml
-    if: github.ref == format('refs/heads/{0}', matrix.branch)
     environment:
       name: ${{ matrix.env_name }}
     steps:
       - name: Checkout repository
+        if: ${{ github.ref == format('refs/heads/{0}', matrix.branch) }}
         uses: actions/checkout@v4
 
       - name: Setup Flyctl
+        if: ${{ github.ref == format('refs/heads/{0}', matrix.branch) }}
         uses: superfly/flyctl-actions/setup-flyctl@v1
 
       - name: Deploy to ${{ matrix.env_name }}
+        if: ${{ github.ref == format('refs/heads/{0}', matrix.branch) }}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: flyctl deploy --remote-only --config ${{ matrix.config }}
