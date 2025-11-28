@@ -11,6 +11,7 @@ import (
 type config struct {
 	Port        int    `mapstructure:"PORT"`
 	ClerkSecret string `mapstructure:"CLERK_SECRET_KEY"`
+	Terminal    string `mapstructure:"TERMINAL"`
 }
 
 func NewConfigFromEnv() (config, error) {
@@ -31,8 +32,14 @@ func NewConfigFromEnv() (config, error) {
 	}
 
 	viper.AutomaticEnv()
-
 	var cfg config
+	if err := viper.BindEnv("PORT"); err != nil {
+		return cfg, fmt.Errorf("failed to bind env PORT: %w", err)
+	}
+	if err := viper.BindEnv("CLERK_SECRET_KEY"); err != nil {
+		return cfg, fmt.Errorf("failed to bind env CLERK_SECRET_KEY: %w", err)
+	}
+
 	if err := viper.Unmarshal(&cfg); err != nil {
 		return cfg, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
