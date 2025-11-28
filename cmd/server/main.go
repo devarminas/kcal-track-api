@@ -30,7 +30,7 @@ func main() {
 	defer logger.Sync()
 	config, err := NewConfigFromEnv()
 	if err != nil {
-		logger.Panic("failed to read env variables")
+		logger.Panic("failed to read env variables", zap.Error(err))
 	}
 
 	store := cache.NewInMemoryCache()
