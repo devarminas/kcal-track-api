@@ -1,52 +1,49 @@
 package middleware
 
 import (
-	"devarminas/kcal-track-api/internal/auth"
 	"net/http"
 	"strings"
 
+	"devarminas/kcal-track-api/internal/auth"
+
+	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
-func ClerkAuth(v auth.Verifier, logger *zap.Logger) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			token := getSessionToken(r)
-			if token == "" {
-				logger.Warn("missing session token",
-					zap.String("path", r.URL.Path),
-					zap.String("method", r.Method),
-				)
-				unauthorized(w)
-				return
-			}
-
-			user, err := v.VerifySession(r.Context(), token)
-			if err != nil {
-				logger.Warn("failed to verify session",
-					zap.Error(err),
-					zap.String("path", r.URL.Path),
-					zap.String("method", r.Method),
-				)
-				unauthorized(w)
-				return
-			}
-
-			ctx := auth.WithClaims(r.Context(), user)
-			logger.Info("authenticated request",
-				zap.String("user_id", user.Subject),
-				zap.String("path", r.URL.Path),
-				zap.String("method", r.Method),
+func ClerkAuth(v auth.Verifier, logger *zap.Logger) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := getSessionToken(c.Request)
+		if token == "" {
+			logger.Warn("missing session token",
+				zap.String("path", c.FullPath()),
+				zap.String("method", c.Request.Method),
 			)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	}
-}
 
-func unauthorized(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusUnauthorized)
-	_, _ = w.Write([]byte(`{"access":"unauthorized"}`))
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"access": "unauthorized"})
+			return
+		}
+
+		user, err := v.VerifySession(c.Request.Context(), token)
+		if err != nil {
+			logger.Warn("failed to verify session",
+				zap.Error(err),
+				zap.String("path", c.FullPath()),
+				zap.String("method", c.Request.Method),
+			)
+
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"access": "unauthorized"})
+			return
+		}
+
+		ctx := auth.WithClaims(c.Request.Context(), user)
+		c.Request = c.Request.WithContext(ctx)
+		logger.Info("authenticated request",
+			zap.String("user_id", user.Subject),
+			zap.String("path", c.FullPath()),
+			zap.String("method", c.Request.Method),
+		)
+		c.Next()
+	}
 }
 
 func getSessionToken(r *http.Request) string {

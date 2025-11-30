@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
@@ -11,12 +10,11 @@ import (
 	"devarminas/kcal-track-api/ent/product"
 	authClerk "devarminas/kcal-track-api/internal/auth/clerk"
 	"devarminas/kcal-track-api/internal/cache"
-	kcalMiddleware "devarminas/kcal-track-api/internal/middleware"
+	"devarminas/kcal-track-api/internal/middleware"
 
 	"github.com/clerk/clerk-sdk-go/v2"
 	"github.com/clerk/clerk-sdk-go/v2/jwks"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
 	_ "github.com/lib/pq"
@@ -55,23 +53,25 @@ func main() {
 	jwkClient := NewJWKSClient(config.ClerkSecret)
 	verifier := authClerk.NewVerifier(store, jwkClient, logger)
 
-	r := chi.NewRouter()
-	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
-	r.Use(kcalMiddleware.ZapLogger(logger))
-	r.Use(middleware.Recoverer)
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("welcome"))
+	router := gin.New()
+	router.Use(gin.Recovery())
+
+	if err := router.SetTrustedProxies(nil); err != nil {
+		logger.Warn("failed to set trusted proxies", zap.Error(err))
+	}
+
+	router.GET("/", func(c *gin.Context) {
+		c.String(http.StatusOK, "welcome")
 	})
 
-	r.With(kcalMiddleware.ClerkAuth(verifier, logger)).Get("/test", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("welcome"))
+	router.GET("/test", middleware.ClerkAuth(verifier, logger), func(c *gin.Context) {
+		c.String(http.StatusOK, "welcome")
 	})
 
-	r.Get("/products/search", func(w http.ResponseWriter, r *http.Request) {
-		term := r.URL.Query().Get("q")
+	router.GET("/products/search", func(c *gin.Context) {
+		term := c.Query("q")
 		if term == "" {
-			http.Error(w, "missing q", http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "missing q"})
 			return
 		}
 
@@ -80,18 +80,18 @@ func main() {
 			Where(product.Or(
 				product.NameContainsFold(term),
 				product.BrandContainsFold(term),
-			)).Limit(25).All(r.Context())
+			)).Limit(25).All(c.Request.Context())
 
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		json.NewEncoder(w).Encode(products)
+		c.JSON(http.StatusOK, products)
 	})
 
 	log.Printf("listening on :%v", config.Port)
-	if err := http.ListenAndServe(":"+strconv.Itoa(config.Port), r); err != nil {
+	if err := http.ListenAndServe(":"+strconv.Itoa(config.Port), router); err != nil {
 		log.Fatalf("server failed: %v", err)
 	}
 }
