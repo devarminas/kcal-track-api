@@ -29,6 +29,26 @@ func NewJWKSClient(secretKey string) *jwks.Client {
 	return jwks.NewClient(cfg)
 }
 
+type ProductSearchRequest struct {
+	Query string `form:"q" binding:"required"`
+}
+
+type GetProductByBarcodeRequest struct {
+	Barcode string `uri:"barcode" binding:"required"`
+}
+
+type CreateProductRequest struct {
+	Name        string  `json:"name" binding:"required"`
+	Brand       string  `json:"brand" binding:"required"`
+	Kcal        float64 `json:"kcal" binding:"required"`
+	Carbs       float64 `json:"carbs" binding:"required"`
+	Protein     float64 `json:"protein" binding:"required"`
+	Fat         float64 `json:"fat" binding:"required"`
+	Barcode     string  `json:"barcode"`
+	ServingSize float64 `json:"serving_size"`
+	ServingUnit string  `json:"serving_unit"`
+}
+
 func main() {
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
@@ -69,17 +89,17 @@ func main() {
 	})
 
 	router.GET("/products/search", func(c *gin.Context) {
-		term := c.Query("q")
-		if term == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "missing q"})
+		var request ProductSearchRequest
+		if err := c.ShouldBindQuery(&request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
 		products, err := client.Product.
 			Query().
 			Where(product.Or(
-				product.NameContainsFold(term),
-				product.BrandContainsFold(term),
+				product.NameContainsFold(request.Query),
+				product.BrandContainsFold(request.Query),
 			)).Limit(25).All(c.Request.Context())
 
 		if err != nil {
@@ -88,6 +108,44 @@ func main() {
 		}
 
 		c.JSON(http.StatusOK, products)
+	})
+
+	router.GET("/products/barcode/:barcode", func(c *gin.Context) {
+		var request GetProductByBarcodeRequest
+		if err := c.ShouldBindUri(&request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message":         "Barcode validated successfully",
+			"barcode_scanned": request.Barcode,
+		})
+	})
+
+	router.POST("/products", func(c *gin.Context) {
+		var request CreateProductRequest
+		if err := c.ShouldBindJSON(&request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		product, err := client.Product.
+			Create().
+			SetName(request.Name).
+			SetBrand(request.Brand).
+			SetCalories(request.Kcal).
+			SetCarbohydrates(request.Carbs).
+			SetProtein(request.Protein).
+			SetFat(request.Fat).
+			SetNillableBarcode(&request.Barcode).
+			Save(c.Request.Context())
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusCreated, product)
 	})
 
 	log.Printf("listening on :%v", config.Port)
