@@ -10,6 +10,7 @@ import (
 	"devarminas/kcal-track-api/ent/product"
 	authClerk "devarminas/kcal-track-api/internal/auth/clerk"
 	"devarminas/kcal-track-api/internal/cache"
+	domainproduct "devarminas/kcal-track-api/internal/domain/product"
 	"devarminas/kcal-track-api/internal/middleware"
 
 	"github.com/clerk/clerk-sdk-go/v2"
@@ -70,6 +71,7 @@ func main() {
 	}
 
 	store := cache.NewInMemoryCache()
+	productRepo := domainproduct.NewRepository(client)
 	jwkClient := NewJWKSClient(config.ClerkSecret)
 	verifier := authClerk.NewVerifier(store, jwkClient, logger)
 
@@ -130,22 +132,31 @@ func main() {
 			return
 		}
 
-		product, err := client.Product.
-			Create().
-			SetName(request.Name).
-			SetBrand(request.Brand).
-			SetCalories(request.Kcal).
-			SetCarbohydrates(request.Carbs).
-			SetProtein(request.Protein).
-			SetFat(request.Fat).
-			SetNillableBarcode(&request.Barcode).
-			Save(c.Request.Context())
+		nutrition := domainproduct.Nutrition{
+			Calories:      request.Kcal,
+			Protein:       request.Protein,
+			Fat:           request.Fat,
+			Carbohydrates: request.Carbs,
+		}
+
+		opts := []domainproduct.ProductOption{
+			domainproduct.WithBrand(request.Brand),
+			domainproduct.WithBarcode(request.Barcode),
+		}
+
+		prod, err := domainproduct.NewProduct(request.Name, nutrition, opts...)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		createdProduct, err := productRepo.Save(c.Request.Context(), prod)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		c.JSON(http.StatusCreated, product)
+		c.JSON(http.StatusCreated, createdProduct)
 	})
 
 	log.Printf("listening on :%v", config.Port)
