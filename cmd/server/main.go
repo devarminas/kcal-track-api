@@ -6,17 +6,17 @@ import (
 	"net/http"
 	"strconv"
 
-	"devarminas/kcal-track-api/ent"
-	"devarminas/kcal-track-api/ent/product"
-	authClerk "devarminas/kcal-track-api/internal/auth/clerk"
-	"devarminas/kcal-track-api/internal/cache"
-	domainproduct "devarminas/kcal-track-api/internal/domain/product"
-	"devarminas/kcal-track-api/internal/middleware"
-
 	"github.com/clerk/clerk-sdk-go/v2"
 	"github.com/clerk/clerk-sdk-go/v2/jwks"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+
+	"devarminas/kcal-track-api/ent"
+	v1 "devarminas/kcal-track-api/internal/api/v1"
+	authClerk "devarminas/kcal-track-api/internal/auth/clerk"
+	"devarminas/kcal-track-api/internal/cache"
+	domainproduct "devarminas/kcal-track-api/internal/domain/product"
+	"devarminas/kcal-track-api/internal/middleware"
 
 	_ "github.com/lib/pq"
 )
@@ -30,26 +30,6 @@ func NewJWKSClient(secretKey string) *jwks.Client {
 	return jwks.NewClient(cfg)
 }
 
-type ProductSearchRequest struct {
-	Query string `form:"q" binding:"required"`
-}
-
-type GetProductByBarcodeRequest struct {
-	Barcode string `uri:"barcode" binding:"required"`
-}
-
-type CreateProductRequest struct {
-	Name        string  `json:"name" binding:"required"`
-	Brand       string  `json:"brand" binding:"required"`
-	Kcal        float64 `json:"kcal" binding:"required"`
-	Carbs       float64 `json:"carbs" binding:"required"`
-	Protein     float64 `json:"protein" binding:"required"`
-	Fat         float64 `json:"fat" binding:"required"`
-	Barcode     string  `json:"barcode"`
-	ServingSize float64 `json:"serving_size"`
-	ServingUnit string  `json:"serving_unit"`
-}
-
 func main() {
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
@@ -58,8 +38,6 @@ func main() {
 		logger.Panic("failed to read env variables", zap.Error(err))
 	}
 
-	// TODO: remove
-	// connectionString := "host=localhost port=<port> user=fly-user dbname=<database> password=<pass>"
 	ctx := context.Background()
 	client, err := ent.Open("postgres", "postgresql://fly-user:TlIHN_0Ey2N1OKd0a_X-XPjU4o0Gyivj@localhost:16380/kcal-tracker-stag?sslmode=disable")
 	if err != nil {
@@ -74,6 +52,7 @@ func main() {
 	productRepo := domainproduct.NewRepository(client)
 	jwkClient := NewJWKSClient(config.ClerkSecret)
 	verifier := authClerk.NewVerifier(store, jwkClient, logger)
+	productHandler := v1.NewProductHandler(productRepo)
 
 	router := gin.New()
 	router.Use(gin.Recovery())
@@ -82,82 +61,11 @@ func main() {
 		logger.Warn("failed to set trusted proxies", zap.Error(err))
 	}
 
-	router.GET("/", func(c *gin.Context) {
-		c.String(http.StatusOK, "welcome")
-	})
-
-	router.GET("/test", middleware.ClerkAuth(verifier, logger), func(c *gin.Context) {
-		c.String(http.StatusOK, "welcome")
-	})
-
-	router.GET("/products/search", func(c *gin.Context) {
-		var request ProductSearchRequest
-		if err := c.ShouldBindQuery(&request); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		products, err := client.Product.
-			Query().
-			Where(product.Or(
-				product.NameContainsFold(request.Query),
-				product.BrandContainsFold(request.Query),
-			)).Limit(25).All(c.Request.Context())
-
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusOK, products)
-	})
-
-	router.GET("/products/barcode/:barcode", func(c *gin.Context) {
-		var request GetProductByBarcodeRequest
-		if err := c.ShouldBindUri(&request); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{
-			"message":         "Barcode validated successfully",
-			"barcode_scanned": request.Barcode,
-		})
-	})
-
-	router.POST("/products", func(c *gin.Context) {
-		var request CreateProductRequest
-		if err := c.ShouldBindJSON(&request); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		nutrition := domainproduct.Nutrition{
-			Calories:      request.Kcal,
-			Protein:       request.Protein,
-			Fat:           request.Fat,
-			Carbohydrates: request.Carbs,
-		}
-
-		opts := []domainproduct.ProductOption{
-			domainproduct.WithBrand(request.Brand),
-			domainproduct.WithBarcode(request.Barcode),
-		}
-
-		prod, err := domainproduct.NewProduct(request.Name, nutrition, opts...)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		createdProduct, err := productRepo.Save(c.Request.Context(), prod)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusCreated, createdProduct)
-	})
+	products := router.Group("/products")
+	products.Use(middleware.ClerkAuth(verifier, logger))
+	products.GET("/search", productHandler.SearchProducts)
+	products.GET("/barcode/:barcode", productHandler.GetProductByBarcode)
+	products.POST("", productHandler.CreateProduct)
 
 	log.Printf("listening on :%v", config.Port)
 	if err := http.ListenAndServe(":"+strconv.Itoa(config.Port), router); err != nil {
