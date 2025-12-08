@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 )
@@ -42,7 +43,10 @@ func (Product) Fields() []ent.Field {
 			Min(0),
 		field.Float("sodium").
 			Min(0),
-		field.String("created_by").
+		field.String("owner_id").
+			Nillable().
+			Optional(),
+		field.UUID("parent_id", uuid.UUID{}).
 			Nillable().
 			Optional(),
 	}
@@ -50,5 +54,12 @@ func (Product) Fields() []ent.Field {
 
 // Edges of the Product.
 func (Product) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("forks", Product.Type).
+			From("original_source").
+			Field("parent_id").
+			Unique(),
+
+		edge.To("user_logs", UserLog.Type),
+	}
 }

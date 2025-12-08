@@ -4,8 +4,10 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"devarminas/kcal-track-api/ent/predicate"
 	"devarminas/kcal-track-api/ent/product"
+	"devarminas/kcal-track-api/ent/userlog"
 	"fmt"
 	"math"
 
@@ -19,10 +21,13 @@ import (
 // ProductQuery is the builder for querying Product entities.
 type ProductQuery struct {
 	config
-	ctx        *QueryContext
-	order      []product.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Product
+	ctx                *QueryContext
+	order              []product.OrderOption
+	inters             []Interceptor
+	predicates         []predicate.Product
+	withOriginalSource *ProductQuery
+	withForks          *ProductQuery
+	withUserLogs       *UserLogQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -57,6 +62,72 @@ func (_q *ProductQuery) Unique(unique bool) *ProductQuery {
 func (_q *ProductQuery) Order(o ...product.OrderOption) *ProductQuery {
 	_q.order = append(_q.order, o...)
 	return _q
+}
+
+// QueryOriginalSource chains the current query on the "original_source" edge.
+func (_q *ProductQuery) QueryOriginalSource() *ProductQuery {
+	query := (&ProductClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(product.Table, product.FieldID, selector),
+			sqlgraph.To(product.Table, product.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, product.OriginalSourceTable, product.OriginalSourceColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryForks chains the current query on the "forks" edge.
+func (_q *ProductQuery) QueryForks() *ProductQuery {
+	query := (&ProductClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(product.Table, product.FieldID, selector),
+			sqlgraph.To(product.Table, product.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, product.ForksTable, product.ForksColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryUserLogs chains the current query on the "user_logs" edge.
+func (_q *ProductQuery) QueryUserLogs() *UserLogQuery {
+	query := (&UserLogClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(product.Table, product.FieldID, selector),
+			sqlgraph.To(userlog.Table, userlog.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, product.UserLogsTable, product.UserLogsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Product entity from the query.
@@ -246,15 +317,51 @@ func (_q *ProductQuery) Clone() *ProductQuery {
 		return nil
 	}
 	return &ProductQuery{
-		config:     _q.config,
-		ctx:        _q.ctx.Clone(),
-		order:      append([]product.OrderOption{}, _q.order...),
-		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.Product{}, _q.predicates...),
+		config:             _q.config,
+		ctx:                _q.ctx.Clone(),
+		order:              append([]product.OrderOption{}, _q.order...),
+		inters:             append([]Interceptor{}, _q.inters...),
+		predicates:         append([]predicate.Product{}, _q.predicates...),
+		withOriginalSource: _q.withOriginalSource.Clone(),
+		withForks:          _q.withForks.Clone(),
+		withUserLogs:       _q.withUserLogs.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
+}
+
+// WithOriginalSource tells the query-builder to eager-load the nodes that are connected to
+// the "original_source" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *ProductQuery) WithOriginalSource(opts ...func(*ProductQuery)) *ProductQuery {
+	query := (&ProductClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withOriginalSource = query
+	return _q
+}
+
+// WithForks tells the query-builder to eager-load the nodes that are connected to
+// the "forks" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *ProductQuery) WithForks(opts ...func(*ProductQuery)) *ProductQuery {
+	query := (&ProductClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withForks = query
+	return _q
+}
+
+// WithUserLogs tells the query-builder to eager-load the nodes that are connected to
+// the "user_logs" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *ProductQuery) WithUserLogs(opts ...func(*UserLogQuery)) *ProductQuery {
+	query := (&UserLogClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withUserLogs = query
+	return _q
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -333,8 +440,13 @@ func (_q *ProductQuery) prepareQuery(ctx context.Context) error {
 
 func (_q *ProductQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Product, error) {
 	var (
-		nodes = []*Product{}
-		_spec = _q.querySpec()
+		nodes       = []*Product{}
+		_spec       = _q.querySpec()
+		loadedTypes = [3]bool{
+			_q.withOriginalSource != nil,
+			_q.withForks != nil,
+			_q.withUserLogs != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Product).scanValues(nil, columns)
@@ -342,6 +454,7 @@ func (_q *ProductQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Prod
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Product{config: _q.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -353,7 +466,123 @@ func (_q *ProductQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Prod
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := _q.withOriginalSource; query != nil {
+		if err := _q.loadOriginalSource(ctx, query, nodes, nil,
+			func(n *Product, e *Product) { n.Edges.OriginalSource = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withForks; query != nil {
+		if err := _q.loadForks(ctx, query, nodes,
+			func(n *Product) { n.Edges.Forks = []*Product{} },
+			func(n *Product, e *Product) { n.Edges.Forks = append(n.Edges.Forks, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withUserLogs; query != nil {
+		if err := _q.loadUserLogs(ctx, query, nodes,
+			func(n *Product) { n.Edges.UserLogs = []*UserLog{} },
+			func(n *Product, e *UserLog) { n.Edges.UserLogs = append(n.Edges.UserLogs, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (_q *ProductQuery) loadOriginalSource(ctx context.Context, query *ProductQuery, nodes []*Product, init func(*Product), assign func(*Product, *Product)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Product)
+	for i := range nodes {
+		if nodes[i].ParentID == nil {
+			continue
+		}
+		fk := *nodes[i].ParentID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(product.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "parent_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (_q *ProductQuery) loadForks(ctx context.Context, query *ProductQuery, nodes []*Product, init func(*Product), assign func(*Product, *Product)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Product)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(product.FieldParentID)
+	}
+	query.Where(predicate.Product(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(product.ForksColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.ParentID
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "parent_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "parent_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *ProductQuery) loadUserLogs(ctx context.Context, query *UserLogQuery, nodes []*Product, init func(*Product), assign func(*Product, *UserLog)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Product)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(userlog.FieldProductID)
+	}
+	query.Where(predicate.UserLog(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(product.UserLogsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.ProductID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "product_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
 }
 
 func (_q *ProductQuery) sqlCount(ctx context.Context) (int, error) {
@@ -380,6 +609,9 @@ func (_q *ProductQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != product.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withOriginalSource != nil {
+			_spec.Node.AddColumnOnce(product.FieldParentID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

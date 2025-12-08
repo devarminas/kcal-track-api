@@ -6,6 +6,7 @@ import (
 	"devarminas/kcal-track-api/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -109,9 +110,14 @@ func Sodium(v float64) predicate.Product {
 	return predicate.Product(sql.FieldEQ(FieldSodium, v))
 }
 
-// CreatedBy applies equality check predicate on the "created_by" field. It's identical to CreatedByEQ.
-func CreatedBy(v string) predicate.Product {
-	return predicate.Product(sql.FieldEQ(FieldCreatedBy, v))
+// OwnerID applies equality check predicate on the "owner_id" field. It's identical to OwnerIDEQ.
+func OwnerID(v string) predicate.Product {
+	return predicate.Product(sql.FieldEQ(FieldOwnerID, v))
+}
+
+// ParentID applies equality check predicate on the "parent_id" field. It's identical to ParentIDEQ.
+func ParentID(v uuid.UUID) predicate.Product {
+	return predicate.Product(sql.FieldEQ(FieldParentID, v))
 }
 
 // BarcodeEQ applies the EQ predicate on the "barcode" field.
@@ -649,79 +655,178 @@ func SodiumLTE(v float64) predicate.Product {
 	return predicate.Product(sql.FieldLTE(FieldSodium, v))
 }
 
-// CreatedByEQ applies the EQ predicate on the "created_by" field.
-func CreatedByEQ(v string) predicate.Product {
-	return predicate.Product(sql.FieldEQ(FieldCreatedBy, v))
+// OwnerIDEQ applies the EQ predicate on the "owner_id" field.
+func OwnerIDEQ(v string) predicate.Product {
+	return predicate.Product(sql.FieldEQ(FieldOwnerID, v))
 }
 
-// CreatedByNEQ applies the NEQ predicate on the "created_by" field.
-func CreatedByNEQ(v string) predicate.Product {
-	return predicate.Product(sql.FieldNEQ(FieldCreatedBy, v))
+// OwnerIDNEQ applies the NEQ predicate on the "owner_id" field.
+func OwnerIDNEQ(v string) predicate.Product {
+	return predicate.Product(sql.FieldNEQ(FieldOwnerID, v))
 }
 
-// CreatedByIn applies the In predicate on the "created_by" field.
-func CreatedByIn(vs ...string) predicate.Product {
-	return predicate.Product(sql.FieldIn(FieldCreatedBy, vs...))
+// OwnerIDIn applies the In predicate on the "owner_id" field.
+func OwnerIDIn(vs ...string) predicate.Product {
+	return predicate.Product(sql.FieldIn(FieldOwnerID, vs...))
 }
 
-// CreatedByNotIn applies the NotIn predicate on the "created_by" field.
-func CreatedByNotIn(vs ...string) predicate.Product {
-	return predicate.Product(sql.FieldNotIn(FieldCreatedBy, vs...))
+// OwnerIDNotIn applies the NotIn predicate on the "owner_id" field.
+func OwnerIDNotIn(vs ...string) predicate.Product {
+	return predicate.Product(sql.FieldNotIn(FieldOwnerID, vs...))
 }
 
-// CreatedByGT applies the GT predicate on the "created_by" field.
-func CreatedByGT(v string) predicate.Product {
-	return predicate.Product(sql.FieldGT(FieldCreatedBy, v))
+// OwnerIDGT applies the GT predicate on the "owner_id" field.
+func OwnerIDGT(v string) predicate.Product {
+	return predicate.Product(sql.FieldGT(FieldOwnerID, v))
 }
 
-// CreatedByGTE applies the GTE predicate on the "created_by" field.
-func CreatedByGTE(v string) predicate.Product {
-	return predicate.Product(sql.FieldGTE(FieldCreatedBy, v))
+// OwnerIDGTE applies the GTE predicate on the "owner_id" field.
+func OwnerIDGTE(v string) predicate.Product {
+	return predicate.Product(sql.FieldGTE(FieldOwnerID, v))
 }
 
-// CreatedByLT applies the LT predicate on the "created_by" field.
-func CreatedByLT(v string) predicate.Product {
-	return predicate.Product(sql.FieldLT(FieldCreatedBy, v))
+// OwnerIDLT applies the LT predicate on the "owner_id" field.
+func OwnerIDLT(v string) predicate.Product {
+	return predicate.Product(sql.FieldLT(FieldOwnerID, v))
 }
 
-// CreatedByLTE applies the LTE predicate on the "created_by" field.
-func CreatedByLTE(v string) predicate.Product {
-	return predicate.Product(sql.FieldLTE(FieldCreatedBy, v))
+// OwnerIDLTE applies the LTE predicate on the "owner_id" field.
+func OwnerIDLTE(v string) predicate.Product {
+	return predicate.Product(sql.FieldLTE(FieldOwnerID, v))
 }
 
-// CreatedByContains applies the Contains predicate on the "created_by" field.
-func CreatedByContains(v string) predicate.Product {
-	return predicate.Product(sql.FieldContains(FieldCreatedBy, v))
+// OwnerIDContains applies the Contains predicate on the "owner_id" field.
+func OwnerIDContains(v string) predicate.Product {
+	return predicate.Product(sql.FieldContains(FieldOwnerID, v))
 }
 
-// CreatedByHasPrefix applies the HasPrefix predicate on the "created_by" field.
-func CreatedByHasPrefix(v string) predicate.Product {
-	return predicate.Product(sql.FieldHasPrefix(FieldCreatedBy, v))
+// OwnerIDHasPrefix applies the HasPrefix predicate on the "owner_id" field.
+func OwnerIDHasPrefix(v string) predicate.Product {
+	return predicate.Product(sql.FieldHasPrefix(FieldOwnerID, v))
 }
 
-// CreatedByHasSuffix applies the HasSuffix predicate on the "created_by" field.
-func CreatedByHasSuffix(v string) predicate.Product {
-	return predicate.Product(sql.FieldHasSuffix(FieldCreatedBy, v))
+// OwnerIDHasSuffix applies the HasSuffix predicate on the "owner_id" field.
+func OwnerIDHasSuffix(v string) predicate.Product {
+	return predicate.Product(sql.FieldHasSuffix(FieldOwnerID, v))
 }
 
-// CreatedByIsNil applies the IsNil predicate on the "created_by" field.
-func CreatedByIsNil() predicate.Product {
-	return predicate.Product(sql.FieldIsNull(FieldCreatedBy))
+// OwnerIDIsNil applies the IsNil predicate on the "owner_id" field.
+func OwnerIDIsNil() predicate.Product {
+	return predicate.Product(sql.FieldIsNull(FieldOwnerID))
 }
 
-// CreatedByNotNil applies the NotNil predicate on the "created_by" field.
-func CreatedByNotNil() predicate.Product {
-	return predicate.Product(sql.FieldNotNull(FieldCreatedBy))
+// OwnerIDNotNil applies the NotNil predicate on the "owner_id" field.
+func OwnerIDNotNil() predicate.Product {
+	return predicate.Product(sql.FieldNotNull(FieldOwnerID))
 }
 
-// CreatedByEqualFold applies the EqualFold predicate on the "created_by" field.
-func CreatedByEqualFold(v string) predicate.Product {
-	return predicate.Product(sql.FieldEqualFold(FieldCreatedBy, v))
+// OwnerIDEqualFold applies the EqualFold predicate on the "owner_id" field.
+func OwnerIDEqualFold(v string) predicate.Product {
+	return predicate.Product(sql.FieldEqualFold(FieldOwnerID, v))
 }
 
-// CreatedByContainsFold applies the ContainsFold predicate on the "created_by" field.
-func CreatedByContainsFold(v string) predicate.Product {
-	return predicate.Product(sql.FieldContainsFold(FieldCreatedBy, v))
+// OwnerIDContainsFold applies the ContainsFold predicate on the "owner_id" field.
+func OwnerIDContainsFold(v string) predicate.Product {
+	return predicate.Product(sql.FieldContainsFold(FieldOwnerID, v))
+}
+
+// ParentIDEQ applies the EQ predicate on the "parent_id" field.
+func ParentIDEQ(v uuid.UUID) predicate.Product {
+	return predicate.Product(sql.FieldEQ(FieldParentID, v))
+}
+
+// ParentIDNEQ applies the NEQ predicate on the "parent_id" field.
+func ParentIDNEQ(v uuid.UUID) predicate.Product {
+	return predicate.Product(sql.FieldNEQ(FieldParentID, v))
+}
+
+// ParentIDIn applies the In predicate on the "parent_id" field.
+func ParentIDIn(vs ...uuid.UUID) predicate.Product {
+	return predicate.Product(sql.FieldIn(FieldParentID, vs...))
+}
+
+// ParentIDNotIn applies the NotIn predicate on the "parent_id" field.
+func ParentIDNotIn(vs ...uuid.UUID) predicate.Product {
+	return predicate.Product(sql.FieldNotIn(FieldParentID, vs...))
+}
+
+// ParentIDIsNil applies the IsNil predicate on the "parent_id" field.
+func ParentIDIsNil() predicate.Product {
+	return predicate.Product(sql.FieldIsNull(FieldParentID))
+}
+
+// ParentIDNotNil applies the NotNil predicate on the "parent_id" field.
+func ParentIDNotNil() predicate.Product {
+	return predicate.Product(sql.FieldNotNull(FieldParentID))
+}
+
+// HasOriginalSource applies the HasEdge predicate on the "original_source" edge.
+func HasOriginalSource() predicate.Product {
+	return predicate.Product(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, OriginalSourceTable, OriginalSourceColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasOriginalSourceWith applies the HasEdge predicate on the "original_source" edge with a given conditions (other predicates).
+func HasOriginalSourceWith(preds ...predicate.Product) predicate.Product {
+	return predicate.Product(func(s *sql.Selector) {
+		step := newOriginalSourceStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasForks applies the HasEdge predicate on the "forks" edge.
+func HasForks() predicate.Product {
+	return predicate.Product(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ForksTable, ForksColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasForksWith applies the HasEdge predicate on the "forks" edge with a given conditions (other predicates).
+func HasForksWith(preds ...predicate.Product) predicate.Product {
+	return predicate.Product(func(s *sql.Selector) {
+		step := newForksStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasUserLogs applies the HasEdge predicate on the "user_logs" edge.
+func HasUserLogs() predicate.Product {
+	return predicate.Product(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, UserLogsTable, UserLogsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasUserLogsWith applies the HasEdge predicate on the "user_logs" edge with a given conditions (other predicates).
+func HasUserLogsWith(preds ...predicate.UserLog) predicate.Product {
+	return predicate.Product(func(s *sql.Selector) {
+		step := newUserLogsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

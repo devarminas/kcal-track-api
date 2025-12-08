@@ -4,6 +4,7 @@ package product
 
 import (
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -34,10 +35,33 @@ const (
 	FieldSugars = "sugars"
 	// FieldSodium holds the string denoting the sodium field in the database.
 	FieldSodium = "sodium"
-	// FieldCreatedBy holds the string denoting the created_by field in the database.
-	FieldCreatedBy = "created_by"
+	// FieldOwnerID holds the string denoting the owner_id field in the database.
+	FieldOwnerID = "owner_id"
+	// FieldParentID holds the string denoting the parent_id field in the database.
+	FieldParentID = "parent_id"
+	// EdgeOriginalSource holds the string denoting the original_source edge name in mutations.
+	EdgeOriginalSource = "original_source"
+	// EdgeForks holds the string denoting the forks edge name in mutations.
+	EdgeForks = "forks"
+	// EdgeUserLogs holds the string denoting the user_logs edge name in mutations.
+	EdgeUserLogs = "user_logs"
 	// Table holds the table name of the product in the database.
 	Table = "products"
+	// OriginalSourceTable is the table that holds the original_source relation/edge.
+	OriginalSourceTable = "products"
+	// OriginalSourceColumn is the table column denoting the original_source relation/edge.
+	OriginalSourceColumn = "parent_id"
+	// ForksTable is the table that holds the forks relation/edge.
+	ForksTable = "products"
+	// ForksColumn is the table column denoting the forks relation/edge.
+	ForksColumn = "parent_id"
+	// UserLogsTable is the table that holds the user_logs relation/edge.
+	UserLogsTable = "user_logs"
+	// UserLogsInverseTable is the table name for the UserLog entity.
+	// It exists in this package in order to avoid circular dependency with the "userlog" package.
+	UserLogsInverseTable = "user_logs"
+	// UserLogsColumn is the table column denoting the user_logs relation/edge.
+	UserLogsColumn = "product_id"
 )
 
 // Columns holds all SQL columns for product fields.
@@ -54,7 +78,8 @@ var Columns = []string{
 	FieldFiber,
 	FieldSugars,
 	FieldSodium,
-	FieldCreatedBy,
+	FieldOwnerID,
+	FieldParentID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -153,7 +178,68 @@ func BySodium(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSodium, opts...).ToFunc()
 }
 
-// ByCreatedBy orders the results by the created_by field.
-func ByCreatedBy(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCreatedBy, opts...).ToFunc()
+// ByOwnerID orders the results by the owner_id field.
+func ByOwnerID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOwnerID, opts...).ToFunc()
+}
+
+// ByParentID orders the results by the parent_id field.
+func ByParentID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldParentID, opts...).ToFunc()
+}
+
+// ByOriginalSourceField orders the results by original_source field.
+func ByOriginalSourceField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newOriginalSourceStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByForksCount orders the results by forks count.
+func ByForksCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newForksStep(), opts...)
+	}
+}
+
+// ByForks orders the results by forks terms.
+func ByForks(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newForksStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByUserLogsCount orders the results by user_logs count.
+func ByUserLogsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newUserLogsStep(), opts...)
+	}
+}
+
+// ByUserLogs orders the results by user_logs terms.
+func ByUserLogs(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newUserLogsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newOriginalSourceStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(Table, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, OriginalSourceTable, OriginalSourceColumn),
+	)
+}
+func newForksStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(Table, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ForksTable, ForksColumn),
+	)
+}
+func newUserLogsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(UserLogsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, UserLogsTable, UserLogsColumn),
+	)
 }

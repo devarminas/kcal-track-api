@@ -8,3 +8,6 @@ import (
 
 // Product is the predicate function for product builders.
 type Product func(*sql.Selector)
+
+// UserLog is the predicate function for userlog builders.
+type UserLog func(*sql.Selector)

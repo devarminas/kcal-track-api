@@ -22,19 +22,53 @@ var (
 		{Name: "fiber", Type: field.TypeFloat64},
 		{Name: "sugars", Type: field.TypeFloat64},
 		{Name: "sodium", Type: field.TypeFloat64},
-		{Name: "created_by", Type: field.TypeString, Nullable: true},
+		{Name: "owner_id", Type: field.TypeString, Nullable: true},
+		{Name: "parent_id", Type: field.TypeUUID, Nullable: true},
 	}
 	// ProductsTable holds the schema information for the "products" table.
 	ProductsTable = &schema.Table{
 		Name:       "products",
 		Columns:    ProductsColumns,
 		PrimaryKey: []*schema.Column{ProductsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "products_products_forks",
+				Columns:    []*schema.Column{ProductsColumns[13]},
+				RefColumns: []*schema.Column{ProductsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// UserLogsColumns holds the columns for the "user_logs" table.
+	UserLogsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "amount", Type: field.TypeFloat64},
+		{Name: "date", Type: field.TypeTime},
+		{Name: "user_id", Type: field.TypeString, Nullable: true},
+		{Name: "product_id", Type: field.TypeUUID},
+	}
+	// UserLogsTable holds the schema information for the "user_logs" table.
+	UserLogsTable = &schema.Table{
+		Name:       "user_logs",
+		Columns:    UserLogsColumns,
+		PrimaryKey: []*schema.Column{UserLogsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_logs_products_user_logs",
+				Columns:    []*schema.Column{UserLogsColumns[4]},
+				RefColumns: []*schema.Column{ProductsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		ProductsTable,
+		UserLogsTable,
 	}
 )
 
 func init() {
+	ProductsTable.ForeignKeys[0].RefTable = ProductsTable
+	UserLogsTable.ForeignKeys[0].RefTable = ProductsTable
 }

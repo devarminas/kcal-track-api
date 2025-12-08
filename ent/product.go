@@ -39,9 +39,56 @@ type Product struct {
 	Sugars float64 `json:"sugars,omitempty"`
 	// Sodium holds the value of the "sodium" field.
 	Sodium float64 `json:"sodium,omitempty"`
-	// CreatedBy holds the value of the "created_by" field.
-	CreatedBy    *string `json:"created_by,omitempty"`
+	// OwnerID holds the value of the "owner_id" field.
+	OwnerID *string `json:"owner_id,omitempty"`
+	// ParentID holds the value of the "parent_id" field.
+	ParentID *uuid.UUID `json:"parent_id,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the ProductQuery when eager-loading is set.
+	Edges        ProductEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// ProductEdges holds the relations/edges for other nodes in the graph.
+type ProductEdges struct {
+	// OriginalSource holds the value of the original_source edge.
+	OriginalSource *Product `json:"original_source,omitempty"`
+	// Forks holds the value of the forks edge.
+	Forks []*Product `json:"forks,omitempty"`
+	// UserLogs holds the value of the user_logs edge.
+	UserLogs []*UserLog `json:"user_logs,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [3]bool
+}
+
+// OriginalSourceOrErr returns the OriginalSource value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ProductEdges) OriginalSourceOrErr() (*Product, error) {
+	if e.OriginalSource != nil {
+		return e.OriginalSource, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: product.Label}
+	}
+	return nil, &NotLoadedError{edge: "original_source"}
+}
+
+// ForksOrErr returns the Forks value or an error if the edge
+// was not loaded in eager-loading.
+func (e ProductEdges) ForksOrErr() ([]*Product, error) {
+	if e.loadedTypes[1] {
+		return e.Forks, nil
+	}
+	return nil, &NotLoadedError{edge: "forks"}
+}
+
+// UserLogsOrErr returns the UserLogs value or an error if the edge
+// was not loaded in eager-loading.
+func (e ProductEdges) UserLogsOrErr() ([]*UserLog, error) {
+	if e.loadedTypes[2] {
+		return e.UserLogs, nil
+	}
+	return nil, &NotLoadedError{edge: "user_logs"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -49,9 +96,11 @@ func (*Product) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case product.FieldParentID:
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case product.FieldCalories, product.FieldProtein, product.FieldFat, product.FieldSaturatedFat, product.FieldCarbohydrates, product.FieldFiber, product.FieldSugars, product.FieldSodium:
 			values[i] = new(sql.NullFloat64)
-		case product.FieldBarcode, product.FieldName, product.FieldBrand, product.FieldCreatedBy:
+		case product.FieldBarcode, product.FieldName, product.FieldBrand, product.FieldOwnerID:
 			values[i] = new(sql.NullString)
 		case product.FieldID:
 			values[i] = new(uuid.UUID)
@@ -144,12 +193,19 @@ func (_m *Product) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Sodium = value.Float64
 			}
-		case product.FieldCreatedBy:
+		case product.FieldOwnerID:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field created_by", values[i])
+				return fmt.Errorf("unexpected type %T for field owner_id", values[i])
 			} else if value.Valid {
-				_m.CreatedBy = new(string)
-				*_m.CreatedBy = value.String
+				_m.OwnerID = new(string)
+				*_m.OwnerID = value.String
+			}
+		case product.FieldParentID:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field parent_id", values[i])
+			} else if value.Valid {
+				_m.ParentID = new(uuid.UUID)
+				*_m.ParentID = *value.S.(*uuid.UUID)
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -162,6 +218,21 @@ func (_m *Product) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *Product) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
+}
+
+// QueryOriginalSource queries the "original_source" edge of the Product entity.
+func (_m *Product) QueryOriginalSource() *ProductQuery {
+	return NewProductClient(_m.config).QueryOriginalSource(_m)
+}
+
+// QueryForks queries the "forks" edge of the Product entity.
+func (_m *Product) QueryForks() *ProductQuery {
+	return NewProductClient(_m.config).QueryForks(_m)
+}
+
+// QueryUserLogs queries the "user_logs" edge of the Product entity.
+func (_m *Product) QueryUserLogs() *UserLogQuery {
+	return NewProductClient(_m.config).QueryUserLogs(_m)
 }
 
 // Update returns a builder for updating this Product.
@@ -224,9 +295,14 @@ func (_m *Product) String() string {
 	builder.WriteString("sodium=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Sodium))
 	builder.WriteString(", ")
-	if v := _m.CreatedBy; v != nil {
-		builder.WriteString("created_by=")
+	if v := _m.OwnerID; v != nil {
+		builder.WriteString("owner_id=")
 		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.ParentID; v != nil {
+		builder.WriteString("parent_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteByte(')')
 	return builder.String()

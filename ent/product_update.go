@@ -6,12 +6,14 @@ import (
 	"context"
 	"devarminas/kcal-track-api/ent/predicate"
 	"devarminas/kcal-track-api/ent/product"
+	"devarminas/kcal-track-api/ent/userlog"
 	"errors"
 	"fmt"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 )
 
 // ProductUpdate is the builder for updating Product entities.
@@ -249,29 +251,146 @@ func (_u *ProductUpdate) AddSodium(v float64) *ProductUpdate {
 	return _u
 }
 
-// SetCreatedBy sets the "created_by" field.
-func (_u *ProductUpdate) SetCreatedBy(v string) *ProductUpdate {
-	_u.mutation.SetCreatedBy(v)
+// SetOwnerID sets the "owner_id" field.
+func (_u *ProductUpdate) SetOwnerID(v string) *ProductUpdate {
+	_u.mutation.SetOwnerID(v)
 	return _u
 }
 
-// SetNillableCreatedBy sets the "created_by" field if the given value is not nil.
-func (_u *ProductUpdate) SetNillableCreatedBy(v *string) *ProductUpdate {
+// SetNillableOwnerID sets the "owner_id" field if the given value is not nil.
+func (_u *ProductUpdate) SetNillableOwnerID(v *string) *ProductUpdate {
 	if v != nil {
-		_u.SetCreatedBy(*v)
+		_u.SetOwnerID(*v)
 	}
 	return _u
 }
 
-// ClearCreatedBy clears the value of the "created_by" field.
-func (_u *ProductUpdate) ClearCreatedBy() *ProductUpdate {
-	_u.mutation.ClearCreatedBy()
+// ClearOwnerID clears the value of the "owner_id" field.
+func (_u *ProductUpdate) ClearOwnerID() *ProductUpdate {
+	_u.mutation.ClearOwnerID()
 	return _u
+}
+
+// SetParentID sets the "parent_id" field.
+func (_u *ProductUpdate) SetParentID(v uuid.UUID) *ProductUpdate {
+	_u.mutation.SetParentID(v)
+	return _u
+}
+
+// SetNillableParentID sets the "parent_id" field if the given value is not nil.
+func (_u *ProductUpdate) SetNillableParentID(v *uuid.UUID) *ProductUpdate {
+	if v != nil {
+		_u.SetParentID(*v)
+	}
+	return _u
+}
+
+// ClearParentID clears the value of the "parent_id" field.
+func (_u *ProductUpdate) ClearParentID() *ProductUpdate {
+	_u.mutation.ClearParentID()
+	return _u
+}
+
+// SetOriginalSourceID sets the "original_source" edge to the Product entity by ID.
+func (_u *ProductUpdate) SetOriginalSourceID(id uuid.UUID) *ProductUpdate {
+	_u.mutation.SetOriginalSourceID(id)
+	return _u
+}
+
+// SetNillableOriginalSourceID sets the "original_source" edge to the Product entity by ID if the given value is not nil.
+func (_u *ProductUpdate) SetNillableOriginalSourceID(id *uuid.UUID) *ProductUpdate {
+	if id != nil {
+		_u = _u.SetOriginalSourceID(*id)
+	}
+	return _u
+}
+
+// SetOriginalSource sets the "original_source" edge to the Product entity.
+func (_u *ProductUpdate) SetOriginalSource(v *Product) *ProductUpdate {
+	return _u.SetOriginalSourceID(v.ID)
+}
+
+// AddForkIDs adds the "forks" edge to the Product entity by IDs.
+func (_u *ProductUpdate) AddForkIDs(ids ...uuid.UUID) *ProductUpdate {
+	_u.mutation.AddForkIDs(ids...)
+	return _u
+}
+
+// AddForks adds the "forks" edges to the Product entity.
+func (_u *ProductUpdate) AddForks(v ...*Product) *ProductUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddForkIDs(ids...)
+}
+
+// AddUserLogIDs adds the "user_logs" edge to the UserLog entity by IDs.
+func (_u *ProductUpdate) AddUserLogIDs(ids ...uuid.UUID) *ProductUpdate {
+	_u.mutation.AddUserLogIDs(ids...)
+	return _u
+}
+
+// AddUserLogs adds the "user_logs" edges to the UserLog entity.
+func (_u *ProductUpdate) AddUserLogs(v ...*UserLog) *ProductUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddUserLogIDs(ids...)
 }
 
 // Mutation returns the ProductMutation object of the builder.
 func (_u *ProductUpdate) Mutation() *ProductMutation {
 	return _u.mutation
+}
+
+// ClearOriginalSource clears the "original_source" edge to the Product entity.
+func (_u *ProductUpdate) ClearOriginalSource() *ProductUpdate {
+	_u.mutation.ClearOriginalSource()
+	return _u
+}
+
+// ClearForks clears all "forks" edges to the Product entity.
+func (_u *ProductUpdate) ClearForks() *ProductUpdate {
+	_u.mutation.ClearForks()
+	return _u
+}
+
+// RemoveForkIDs removes the "forks" edge to Product entities by IDs.
+func (_u *ProductUpdate) RemoveForkIDs(ids ...uuid.UUID) *ProductUpdate {
+	_u.mutation.RemoveForkIDs(ids...)
+	return _u
+}
+
+// RemoveForks removes "forks" edges to Product entities.
+func (_u *ProductUpdate) RemoveForks(v ...*Product) *ProductUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveForkIDs(ids...)
+}
+
+// ClearUserLogs clears all "user_logs" edges to the UserLog entity.
+func (_u *ProductUpdate) ClearUserLogs() *ProductUpdate {
+	_u.mutation.ClearUserLogs()
+	return _u
+}
+
+// RemoveUserLogIDs removes the "user_logs" edge to UserLog entities by IDs.
+func (_u *ProductUpdate) RemoveUserLogIDs(ids ...uuid.UUID) *ProductUpdate {
+	_u.mutation.RemoveUserLogIDs(ids...)
+	return _u
+}
+
+// RemoveUserLogs removes "user_logs" edges to UserLog entities.
+func (_u *ProductUpdate) RemoveUserLogs(v ...*UserLog) *ProductUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveUserLogIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -426,11 +545,130 @@ func (_u *ProductUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedSodium(); ok {
 		_spec.AddField(product.FieldSodium, field.TypeFloat64, value)
 	}
-	if value, ok := _u.mutation.CreatedBy(); ok {
-		_spec.SetField(product.FieldCreatedBy, field.TypeString, value)
+	if value, ok := _u.mutation.OwnerID(); ok {
+		_spec.SetField(product.FieldOwnerID, field.TypeString, value)
 	}
-	if _u.mutation.CreatedByCleared() {
-		_spec.ClearField(product.FieldCreatedBy, field.TypeString)
+	if _u.mutation.OwnerIDCleared() {
+		_spec.ClearField(product.FieldOwnerID, field.TypeString)
+	}
+	if _u.mutation.OriginalSourceCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   product.OriginalSourceTable,
+			Columns: []string{product.OriginalSourceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.OriginalSourceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   product.OriginalSourceTable,
+			Columns: []string{product.OriginalSourceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ForksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   product.ForksTable,
+			Columns: []string{product.ForksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedForksIDs(); len(nodes) > 0 && !_u.mutation.ForksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   product.ForksTable,
+			Columns: []string{product.ForksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ForksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   product.ForksTable,
+			Columns: []string{product.ForksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.UserLogsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   product.UserLogsTable,
+			Columns: []string{product.UserLogsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userlog.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedUserLogsIDs(); len(nodes) > 0 && !_u.mutation.UserLogsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   product.UserLogsTable,
+			Columns: []string{product.UserLogsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userlog.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.UserLogsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   product.UserLogsTable,
+			Columns: []string{product.UserLogsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userlog.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -674,29 +912,146 @@ func (_u *ProductUpdateOne) AddSodium(v float64) *ProductUpdateOne {
 	return _u
 }
 
-// SetCreatedBy sets the "created_by" field.
-func (_u *ProductUpdateOne) SetCreatedBy(v string) *ProductUpdateOne {
-	_u.mutation.SetCreatedBy(v)
+// SetOwnerID sets the "owner_id" field.
+func (_u *ProductUpdateOne) SetOwnerID(v string) *ProductUpdateOne {
+	_u.mutation.SetOwnerID(v)
 	return _u
 }
 
-// SetNillableCreatedBy sets the "created_by" field if the given value is not nil.
-func (_u *ProductUpdateOne) SetNillableCreatedBy(v *string) *ProductUpdateOne {
+// SetNillableOwnerID sets the "owner_id" field if the given value is not nil.
+func (_u *ProductUpdateOne) SetNillableOwnerID(v *string) *ProductUpdateOne {
 	if v != nil {
-		_u.SetCreatedBy(*v)
+		_u.SetOwnerID(*v)
 	}
 	return _u
 }
 
-// ClearCreatedBy clears the value of the "created_by" field.
-func (_u *ProductUpdateOne) ClearCreatedBy() *ProductUpdateOne {
-	_u.mutation.ClearCreatedBy()
+// ClearOwnerID clears the value of the "owner_id" field.
+func (_u *ProductUpdateOne) ClearOwnerID() *ProductUpdateOne {
+	_u.mutation.ClearOwnerID()
 	return _u
+}
+
+// SetParentID sets the "parent_id" field.
+func (_u *ProductUpdateOne) SetParentID(v uuid.UUID) *ProductUpdateOne {
+	_u.mutation.SetParentID(v)
+	return _u
+}
+
+// SetNillableParentID sets the "parent_id" field if the given value is not nil.
+func (_u *ProductUpdateOne) SetNillableParentID(v *uuid.UUID) *ProductUpdateOne {
+	if v != nil {
+		_u.SetParentID(*v)
+	}
+	return _u
+}
+
+// ClearParentID clears the value of the "parent_id" field.
+func (_u *ProductUpdateOne) ClearParentID() *ProductUpdateOne {
+	_u.mutation.ClearParentID()
+	return _u
+}
+
+// SetOriginalSourceID sets the "original_source" edge to the Product entity by ID.
+func (_u *ProductUpdateOne) SetOriginalSourceID(id uuid.UUID) *ProductUpdateOne {
+	_u.mutation.SetOriginalSourceID(id)
+	return _u
+}
+
+// SetNillableOriginalSourceID sets the "original_source" edge to the Product entity by ID if the given value is not nil.
+func (_u *ProductUpdateOne) SetNillableOriginalSourceID(id *uuid.UUID) *ProductUpdateOne {
+	if id != nil {
+		_u = _u.SetOriginalSourceID(*id)
+	}
+	return _u
+}
+
+// SetOriginalSource sets the "original_source" edge to the Product entity.
+func (_u *ProductUpdateOne) SetOriginalSource(v *Product) *ProductUpdateOne {
+	return _u.SetOriginalSourceID(v.ID)
+}
+
+// AddForkIDs adds the "forks" edge to the Product entity by IDs.
+func (_u *ProductUpdateOne) AddForkIDs(ids ...uuid.UUID) *ProductUpdateOne {
+	_u.mutation.AddForkIDs(ids...)
+	return _u
+}
+
+// AddForks adds the "forks" edges to the Product entity.
+func (_u *ProductUpdateOne) AddForks(v ...*Product) *ProductUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddForkIDs(ids...)
+}
+
+// AddUserLogIDs adds the "user_logs" edge to the UserLog entity by IDs.
+func (_u *ProductUpdateOne) AddUserLogIDs(ids ...uuid.UUID) *ProductUpdateOne {
+	_u.mutation.AddUserLogIDs(ids...)
+	return _u
+}
+
+// AddUserLogs adds the "user_logs" edges to the UserLog entity.
+func (_u *ProductUpdateOne) AddUserLogs(v ...*UserLog) *ProductUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddUserLogIDs(ids...)
 }
 
 // Mutation returns the ProductMutation object of the builder.
 func (_u *ProductUpdateOne) Mutation() *ProductMutation {
 	return _u.mutation
+}
+
+// ClearOriginalSource clears the "original_source" edge to the Product entity.
+func (_u *ProductUpdateOne) ClearOriginalSource() *ProductUpdateOne {
+	_u.mutation.ClearOriginalSource()
+	return _u
+}
+
+// ClearForks clears all "forks" edges to the Product entity.
+func (_u *ProductUpdateOne) ClearForks() *ProductUpdateOne {
+	_u.mutation.ClearForks()
+	return _u
+}
+
+// RemoveForkIDs removes the "forks" edge to Product entities by IDs.
+func (_u *ProductUpdateOne) RemoveForkIDs(ids ...uuid.UUID) *ProductUpdateOne {
+	_u.mutation.RemoveForkIDs(ids...)
+	return _u
+}
+
+// RemoveForks removes "forks" edges to Product entities.
+func (_u *ProductUpdateOne) RemoveForks(v ...*Product) *ProductUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveForkIDs(ids...)
+}
+
+// ClearUserLogs clears all "user_logs" edges to the UserLog entity.
+func (_u *ProductUpdateOne) ClearUserLogs() *ProductUpdateOne {
+	_u.mutation.ClearUserLogs()
+	return _u
+}
+
+// RemoveUserLogIDs removes the "user_logs" edge to UserLog entities by IDs.
+func (_u *ProductUpdateOne) RemoveUserLogIDs(ids ...uuid.UUID) *ProductUpdateOne {
+	_u.mutation.RemoveUserLogIDs(ids...)
+	return _u
+}
+
+// RemoveUserLogs removes "user_logs" edges to UserLog entities.
+func (_u *ProductUpdateOne) RemoveUserLogs(v ...*UserLog) *ProductUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveUserLogIDs(ids...)
 }
 
 // Where appends a list predicates to the ProductUpdate builder.
@@ -881,11 +1236,130 @@ func (_u *ProductUpdateOne) sqlSave(ctx context.Context) (_node *Product, err er
 	if value, ok := _u.mutation.AddedSodium(); ok {
 		_spec.AddField(product.FieldSodium, field.TypeFloat64, value)
 	}
-	if value, ok := _u.mutation.CreatedBy(); ok {
-		_spec.SetField(product.FieldCreatedBy, field.TypeString, value)
+	if value, ok := _u.mutation.OwnerID(); ok {
+		_spec.SetField(product.FieldOwnerID, field.TypeString, value)
 	}
-	if _u.mutation.CreatedByCleared() {
-		_spec.ClearField(product.FieldCreatedBy, field.TypeString)
+	if _u.mutation.OwnerIDCleared() {
+		_spec.ClearField(product.FieldOwnerID, field.TypeString)
+	}
+	if _u.mutation.OriginalSourceCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   product.OriginalSourceTable,
+			Columns: []string{product.OriginalSourceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.OriginalSourceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   product.OriginalSourceTable,
+			Columns: []string{product.OriginalSourceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ForksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   product.ForksTable,
+			Columns: []string{product.ForksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedForksIDs(); len(nodes) > 0 && !_u.mutation.ForksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   product.ForksTable,
+			Columns: []string{product.ForksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ForksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   product.ForksTable,
+			Columns: []string{product.ForksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.UserLogsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   product.UserLogsTable,
+			Columns: []string{product.UserLogsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userlog.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedUserLogsIDs(); len(nodes) > 0 && !_u.mutation.UserLogsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   product.UserLogsTable,
+			Columns: []string{product.UserLogsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userlog.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.UserLogsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   product.UserLogsTable,
+			Columns: []string{product.UserLogsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userlog.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Product{config: _u.config}
 	_spec.Assign = _node.assignValues

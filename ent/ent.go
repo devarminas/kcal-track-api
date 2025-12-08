@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"devarminas/kcal-track-api/ent/product"
+	"devarminas/kcal-track-api/ent/userlog"
 	"errors"
 	"fmt"
 	"reflect"
@@ -74,6 +75,7 @@ func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			product.Table: product.ValidColumn,
+			userlog.Table: userlog.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

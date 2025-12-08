@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"devarminas/kcal-track-api/ent/product"
+	"devarminas/kcal-track-api/ent/userlog"
 	"errors"
 	"fmt"
 
@@ -102,16 +103,30 @@ func (_c *ProductCreate) SetSodium(v float64) *ProductCreate {
 	return _c
 }
 
-// SetCreatedBy sets the "created_by" field.
-func (_c *ProductCreate) SetCreatedBy(v string) *ProductCreate {
-	_c.mutation.SetCreatedBy(v)
+// SetOwnerID sets the "owner_id" field.
+func (_c *ProductCreate) SetOwnerID(v string) *ProductCreate {
+	_c.mutation.SetOwnerID(v)
 	return _c
 }
 
-// SetNillableCreatedBy sets the "created_by" field if the given value is not nil.
-func (_c *ProductCreate) SetNillableCreatedBy(v *string) *ProductCreate {
+// SetNillableOwnerID sets the "owner_id" field if the given value is not nil.
+func (_c *ProductCreate) SetNillableOwnerID(v *string) *ProductCreate {
 	if v != nil {
-		_c.SetCreatedBy(*v)
+		_c.SetOwnerID(*v)
+	}
+	return _c
+}
+
+// SetParentID sets the "parent_id" field.
+func (_c *ProductCreate) SetParentID(v uuid.UUID) *ProductCreate {
+	_c.mutation.SetParentID(v)
+	return _c
+}
+
+// SetNillableParentID sets the "parent_id" field if the given value is not nil.
+func (_c *ProductCreate) SetNillableParentID(v *uuid.UUID) *ProductCreate {
+	if v != nil {
+		_c.SetParentID(*v)
 	}
 	return _c
 }
@@ -128,6 +143,55 @@ func (_c *ProductCreate) SetNillableID(v *uuid.UUID) *ProductCreate {
 		_c.SetID(*v)
 	}
 	return _c
+}
+
+// SetOriginalSourceID sets the "original_source" edge to the Product entity by ID.
+func (_c *ProductCreate) SetOriginalSourceID(id uuid.UUID) *ProductCreate {
+	_c.mutation.SetOriginalSourceID(id)
+	return _c
+}
+
+// SetNillableOriginalSourceID sets the "original_source" edge to the Product entity by ID if the given value is not nil.
+func (_c *ProductCreate) SetNillableOriginalSourceID(id *uuid.UUID) *ProductCreate {
+	if id != nil {
+		_c = _c.SetOriginalSourceID(*id)
+	}
+	return _c
+}
+
+// SetOriginalSource sets the "original_source" edge to the Product entity.
+func (_c *ProductCreate) SetOriginalSource(v *Product) *ProductCreate {
+	return _c.SetOriginalSourceID(v.ID)
+}
+
+// AddForkIDs adds the "forks" edge to the Product entity by IDs.
+func (_c *ProductCreate) AddForkIDs(ids ...uuid.UUID) *ProductCreate {
+	_c.mutation.AddForkIDs(ids...)
+	return _c
+}
+
+// AddForks adds the "forks" edges to the Product entity.
+func (_c *ProductCreate) AddForks(v ...*Product) *ProductCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddForkIDs(ids...)
+}
+
+// AddUserLogIDs adds the "user_logs" edge to the UserLog entity by IDs.
+func (_c *ProductCreate) AddUserLogIDs(ids ...uuid.UUID) *ProductCreate {
+	_c.mutation.AddUserLogIDs(ids...)
+	return _c
+}
+
+// AddUserLogs adds the "user_logs" edges to the UserLog entity.
+func (_c *ProductCreate) AddUserLogs(v ...*UserLog) *ProductCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddUserLogIDs(ids...)
 }
 
 // Mutation returns the ProductMutation object of the builder.
@@ -324,9 +388,58 @@ func (_c *ProductCreate) createSpec() (*Product, *sqlgraph.CreateSpec) {
 		_spec.SetField(product.FieldSodium, field.TypeFloat64, value)
 		_node.Sodium = value
 	}
-	if value, ok := _c.mutation.CreatedBy(); ok {
-		_spec.SetField(product.FieldCreatedBy, field.TypeString, value)
-		_node.CreatedBy = &value
+	if value, ok := _c.mutation.OwnerID(); ok {
+		_spec.SetField(product.FieldOwnerID, field.TypeString, value)
+		_node.OwnerID = &value
+	}
+	if nodes := _c.mutation.OriginalSourceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   product.OriginalSourceTable,
+			Columns: []string{product.OriginalSourceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.ParentID = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ForksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   product.ForksTable,
+			Columns: []string{product.ForksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(product.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.UserLogsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   product.UserLogsTable,
+			Columns: []string{product.UserLogsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userlog.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

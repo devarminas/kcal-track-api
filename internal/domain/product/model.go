@@ -167,8 +167,8 @@ func FromEnt(entProduct *ent.Product) (*Product, error) {
 	if entProduct.Brand != nil {
 		opts = append(opts, WithBrand(*entProduct.Brand))
 	}
-	if entProduct.CreatedBy != nil {
-		opts = append(opts, WithCreatedBy(*entProduct.CreatedBy))
+	if entProduct.OwnerID != nil {
+		opts = append(opts, WithCreatedBy(*entProduct.OwnerID))
 	}
 
 	return NewProduct(entProduct.Name, nutrition, opts...)

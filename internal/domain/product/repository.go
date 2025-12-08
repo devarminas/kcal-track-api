@@ -121,7 +121,7 @@ func (r *repository) saveWithTx(ctx context.Context, tx *ent.Tx, prod *Product) 
 		builder.SetNillableBrand(prod.Brand)
 	}
 	if prod.CreatedBy != nil {
-		builder.SetNillableCreatedBy(prod.CreatedBy)
+		builder.SetNillableOwnerID(prod.CreatedBy)
 	}
 
 	return builder.Save(ctx)

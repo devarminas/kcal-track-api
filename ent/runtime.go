@@ -5,6 +5,8 @@ package ent
 import (
 	"devarminas/kcal-track-api/ent/product"
 	"devarminas/kcal-track-api/ent/schema"
+	"devarminas/kcal-track-api/ent/userlog"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -55,4 +57,18 @@ func init() {
 	productDescID := productFields[0].Descriptor()
 	// product.DefaultID holds the default value on creation for the id field.
 	product.DefaultID = productDescID.Default.(func() uuid.UUID)
+	userlogFields := schema.UserLog{}.Fields()
+	_ = userlogFields
+	// userlogDescAmount is the schema descriptor for amount field.
+	userlogDescAmount := userlogFields[1].Descriptor()
+	// userlog.AmountValidator is a validator for the "amount" field. It is called by the builders before save.
+	userlog.AmountValidator = userlogDescAmount.Validators[0].(func(float64) error)
+	// userlogDescDate is the schema descriptor for date field.
+	userlogDescDate := userlogFields[2].Descriptor()
+	// userlog.DefaultDate holds the default value on creation for the date field.
+	userlog.DefaultDate = userlogDescDate.Default.(func() time.Time)
+	// userlogDescID is the schema descriptor for id field.
+	userlogDescID := userlogFields[0].Descriptor()
+	// userlog.DefaultID holds the default value on creation for the id field.
+	userlog.DefaultID = userlogDescID.Default.(func() uuid.UUID)
 }
